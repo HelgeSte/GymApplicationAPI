@@ -1,0 +1,44 @@
+﻿# =========================
+# ASP.NET / Visual Studio
+# =========================
+
+.vs/
+bin/
+obj/
+
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+
+# Rider / VSCode
+.vscode/
+.idea/
+
+# =========================
+# Node / Frontend (optional)
+# =========================
+
+node_modules/
+dist/
+build/
+
+.env
+.env.*
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================
+# OS
+# =========================
+
+.DS_Store
+Thumbs.db
