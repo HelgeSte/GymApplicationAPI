@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using System.Text;
-using Scalar.AspNetCore;
+using Scalar.AspNetCore;    
 
 var builder = WebApplication.CreateBuilder(args);
 
