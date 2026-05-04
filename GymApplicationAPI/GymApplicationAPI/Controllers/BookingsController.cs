@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using GymApplicationAPI.Data;
+﻿using GymApplicationAPI.Data;
 using GymApplicationAPI.DTOs;
 using GymApplicationAPI.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace GymApplicationAPI.Controllers;
 
@@ -84,7 +85,13 @@ public class BookingsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<BookingDto>> CreateBooking(CreateBookingRequest request)
     {
-        var user = await _context.Users.FindAsync(request.UserId);
+        // Read userId from the JWT token, not from the request body
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userIdClaim == null)
+            return Unauthorized();
+
+        var userId = int.Parse(userIdClaim);
+        var user = await _context.Users.FindAsync(userId);
         if (user == null)
             return NotFound("User not found.");
 
@@ -101,15 +108,17 @@ public class BookingsController : ControllerBase
         if (session.Bookings.Count >= session.TotalSpots)
             return BadRequest("No spots available for this session.");
 
+        // ✅ use userId from token, not request.UserId
         var existingBooking = await _context.Bookings
-            .AnyAsync(b => b.UserId == request.UserId && b.SessionId == request.SessionId);
+            .AnyAsync(b => b.UserId == userId && b.SessionId == request.SessionId);
 
         if (existingBooking)
             return BadRequest("User is already booked for this session.");
 
+        // ✅ use userId from token, not request.UserId
         var booking = new Booking
         {
-            UserId = request.UserId,
+            UserId = userId,
             SessionId = request.SessionId
         };
 
