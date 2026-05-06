@@ -1,6 +1,7 @@
 ﻿using GymApplicationAPI.Data;
 using GymApplicationAPI.DTOs;
 using GymApplicationAPI.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -9,6 +10,7 @@ namespace GymApplicationAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class BookingsController : ControllerBase
 {
     private readonly GymDbContext _context;
@@ -56,6 +58,41 @@ public class BookingsController : ControllerBase
         var user = await _context.Users.FindAsync(userId);
         if (user == null)
             return NotFound("User not found.");
+
+        var bookings = await _context.Bookings
+            .Include(b => b.User)
+            .Include(b => b.Session)
+            .Where(b => b.UserId == userId)
+            .OrderBy(b => b.Session.Date)
+            .ThenBy(b => b.Session.Time)
+            .Select(b => new BookingDto
+            {
+                Id = b.Id,
+                UserId = b.UserId,
+                Username = b.User.Username,
+                FirstName = b.User.FirstName,
+                LastName = b.User.LastName,
+                SessionId = b.SessionId,
+                SessionName = b.Session.Name,
+                SessionDate = b.Session.Date,
+                SessionTime = b.Session.Time,
+                BookedAt = b.BookedAt
+            })
+            .ToListAsync();
+
+        return Ok(bookings);
+    }
+
+    // GET /api/bookings/my - list all bookings for the logged-in user
+    [HttpGet("my")]
+    [Authorize]
+    public async Task<ActionResult<List<BookingDto>>> GetMyBookings()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userIdClaim == null)
+            return Unauthorized();
+
+        var userId = int.Parse(userIdClaim);
 
         var bookings = await _context.Bookings
             .Include(b => b.User)
